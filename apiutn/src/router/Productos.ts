@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { Producto } from "../entity/Producto";
+
 import ProductosController from "../controller/ProductoController";
 
 const routes= Router();
 
-routes.get(``, ProductosController.GetAll);
-routes.post(`create`, ProductosController.add)
+routes.get('/producto', ProductosController.getAll);
+routes.get('/getById/:id', ProductosController.getById);
+routes.post('',ProductosController.add);
 
 export default routes;

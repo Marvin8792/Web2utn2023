@@ -1,30 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { maxLength } from "class-validator";
+import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class User {
-
-    @PrimaryGeneratedColumn()
-    id: number;
-  
-    @Column()
-    cedula: string;
-  
-    @Column()
-    nombre: string;
-  
-    @Column()
-    apellido1: string;
-  
-    @Column()
-    apellido2: string;
-  
-    @Column()
-    fechaNacimiento: Date;
-  
-    @Column()
-    genero: string;
-  
-    @Column()
-    estado: boolean;
-
+export class Cliente {
+  @PrimaryColumn()
+  id_cliente: number
+  @Column()
+  Nombre_cliente: string;
+  @Column()
+  Apellidos_cliente: string;
+  @Column()
+  Direccion_cliente: string;
+  @Column()
+  Telefono_cliente: number;
 }
