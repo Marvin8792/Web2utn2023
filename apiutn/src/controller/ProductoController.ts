@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { Producto } from "../entity/Producto";
+import { validate } from "class-validator";
 
 class ProductosController {
   static getAll = async (req: Request, resp: Response) => {
@@ -98,6 +99,10 @@ class ProductosController {
       producto.fechaIngreso = fecha;
       producto.estado = true;
 
+      const errors= await validate(producto, {validationError: { target: false, value: false}});
+      if (errors.length > 0){
+        return resp
+      }
       await productosRepo.save(producto);
       return resp.status(201).json({ mensaje: "Producto creado" });
     } catch (error) {
@@ -105,8 +110,86 @@ class ProductosController {
     }
   };
 
-  static update = async (req: Request, resp: Response) => {};
-  static delete = async (req: Request, resp: Response) => {};
+  static update = async (req: Request, resp: Response) => {
+    const { id, nombre, precio, stock, fechaIngreso } = req.body;
+
+      //validacion de datos de entrada
+      if (!id) {
+        return resp.status(404).json({ mensaje: "Debe indicar el ID" });
+      }
+      if (!nombre) {
+        return resp
+          .status(404)
+          .json({ mensaje: "Debe indicar el nombre del producto" });
+      }
+      if (!precio) {
+        return resp.status(404).json({ mensaje: "Debe indicar el precio" });
+      }
+      if (precio < 0) {
+        return resp
+          .status(404)
+          .json({ mensaje: "Debe indicar un precio mayor que 0" });
+      }
+      if (!stock) {
+        return resp
+          .status(404)
+          .json({ mensaje: "Debe indicar el stock del producto" });
+      }
+      if (stock < 0) {
+        return resp
+          .status(404)
+          .json({ mensaje: "El stock debe ser mayor que ser" });
+      }
+      const productosRepo = AppDataSource.getRepository(Producto);
+      let pro: Producto;
+      try {
+       pro = await productosRepo.findOneOrFail({ where: { id } });
+      } catch (error) {
+        return resp.status(404).json({mensaje: "No existe el producto"})
+      }
+
+      pro.nombre= nombre;
+      pro.precio= precio;
+      pro.stock= stock;
+      //pro.fechaIngreso
+
+      try {
+        await productosRepo.save(pro);
+        return resp.status(200).json({mensaje: "Se guardo correctamente"})
+      } catch (error) {
+        return resp.status(400).json({mensaje: "No se pudo guardar"})
+      }
+  };
+  static delete = async (req: Request, resp: Response) => {
+    try {
+      const id = parseInt(req.params["id"]);
+      if (!id) {
+        return resp.status(404).json({ mensaje: "Debe indicar el ID" });
+      }
+
+      const productosRepo = AppDataSource.getRepository(Producto);
+      let pro: Producto;
+      try {
+        pro = await productosRepo.findOneOrFail({
+          where: { id: id, estado: true },
+        });
+      } catch (error) {
+        return resp
+          .status(404)
+          .json({ mensaje: "No se encuentra el producto con ese ID" });
+      }
+
+      pro.estado = false;
+      try {
+        await productosRepo.save(pro);
+        return resp.status(200).json({ mensaje: "Se eliminó correctamente" });
+      } catch (error) {
+        return resp.status(400).json({ mensaje: "No se pudo eliminar." });
+      }
+    } catch (error) {
+      return resp.status(400).json({ mensaje: "No se pudo eliminar" });
+    }
+  };
 }
 
 export default ProductosController;

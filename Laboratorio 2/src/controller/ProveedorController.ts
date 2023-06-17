@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
 import { Producto } from "../entity/Producto";
-import { Proveedor } from "../entity/Proveedor";
 
 class ProveedorController {
   static getAll = async (req: Request, resp: Response) => {
