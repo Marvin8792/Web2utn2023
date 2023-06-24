@@ -5,8 +5,6 @@ import UsuarioController from "../controller/UsuarioController";
 const routes= Router();
 
 routes.get('', UsuarioController.getAll);
-routes.get('/getById/:id', UsuarioController.apply);
-routes.post('',UsuarioController.apply);
-routes.patch('',UsuarioController.apply);
-routes.delete('/:id',UsuarioController.apply);
+//routes.get('/getById/:id', UsuarioController.getById);
+routes.post("",UsuarioController.add);
 export default routes;

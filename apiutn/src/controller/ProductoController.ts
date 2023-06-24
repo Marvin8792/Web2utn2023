@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { Producto } from "../entity/Producto";
+import { Producto } from "../Entity/Producto";
 import { validate } from "class-validator";
 
 class ProductosController {
@@ -160,7 +160,7 @@ class ProductosController {
         return resp.status(400).json({mensaje: "No se pudo guardar"})
       }
   };
-  static delete = async (req: Request, resp: Response) => {
+   static delete = async (req: Request, resp: Response) => {
     try {
       const id = parseInt(req.params["id"]);
       if (!id) {
