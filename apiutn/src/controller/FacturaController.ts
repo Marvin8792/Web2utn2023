@@ -1,104 +1,172 @@
 import { AppDataSource } from "../data-source";
 import { Request, Response } from 'express';
 import { Factura } from '../Entity/Factura';
-import { DetalleFactura } from '../Entity/DetalleFactura';
+import { validate } from "class-validator";
+import { getRepository } from "typeorm";
 
-class FacturaController{
-// Obtener todas las facturas
- static obtenerFacturas = async (req: Request, res: Response): Promise<Response> => {
-  const facturaRepository = AppDataSource.getRepository(Factura);
-  const facturas = await facturaRepository.find({ relations: ['detalles'] });
-  return res.json(facturas);
-};
+class ProductosController {
+  static getAll = async (req: Request, resp: Response) => {
+  try {
+    const repoFact = AppDataSource.getRepository(Factura);
+    let lista;
+    try {
+      lista = await repoFact.find({where: {estado:true},relations:{detalles : {producto:true}, cliente:{persona:true}}})
+    } catch (error) {
+      return resp.status(404).json({mensaje: "Nos se encontro datos"})
+    }
+    if(lista.length == 0){
+      return resp.status(404).json({mensaje: "Nos se encontro datos"})
+    }
 
-// Obtener una factura por su id
- static obtenerFactura = async (req: Request, res: Response): Promise<Response> => {
-  const facturaRepository = AppDataSource.getRepository(Factura);
-  const factura = await facturaRepository.findOne.call(req.params.id, { relations: ['detalles'] });
-  if (factura) {
-    return res.json(factura);
-  } else {
-    return res.status(404).json({ error: 'Factura no encontrada' });
+    return resp.status(200).json(lista)
+    
+  } catch (error) {
+    return resp.status(400).json({mensaje: "Error al cargar"})
   }
-};
+  };
 
-// Crear una nueva factura con sus detalles
- static crearFactura = async (req: Request, res: Response): Promise<Response> => {
-  const { cliente, detalles } = req.body;
+  static getById = async (req: Request, resp: Response) => {
+    try {
+      const idfactura = parseInt(req.params["idfactura"]);
 
-  const facturaRepository = AppDataSource.getRepository(Factura);
-  const detalleFacturaRepository = AppDataSource.getRepository(DetalleFactura);
-
-  const factura = new Factura();
-  factura.cliente = cliente;
-
-  const detallesGuardados: DetalleFactura[] = [];
-
-  for (const detalle of detalles) {
-    const detalleFactura = new DetalleFactura();
-    detalleFactura.producto = detalle.producto;
-    detalleFactura.cantidad = detalle.cantidad;
-    detalleFactura.precio = detalle.precio;
-    detalleFactura.factura = factura;
-
-    await detalleFacturaRepository.save(detalleFactura);
-    detallesGuardados.push(detalleFactura);
-  }
-
-  factura.detalles = detallesGuardados;
-  await facturaRepository.save(factura);
-
-  return res.status(201).json(factura);
-};
-
-// Modificar una factura existente
-static modificarFactura = async (req: Request, res: Response): Promise<Response> => {
-  const { cliente, detalles } = req.body;
-  const facturaId = req.params.id;
-
-  const facturaRepository = AppDataSource.getRepository(Factura);
-  const detalleFacturaRepository = AppDataSource.getRepository(DetalleFactura);
-
-  const factura = await facturaRepository.findOne.call(facturaId, { relations: ['detalles'] });
-  if (!factura) {
-    return res.status(404).json({ error: 'Factura no encontrada' });
-  }
-
-  factura.cliente = cliente;
-
-  const detallesGuardados: DetalleFactura[] = [];
-
-  // Actualizar detalles existentes y agregar nuevos
-  for (const detalle of detalles) {
-    if (detalle.id) {
-      const detalleExistente = factura.detalles.find(d => d.id === detalle.id);
-      if (detalleExistente) {
-        detalleExistente.producto = detalle.producto;
-        detalleExistente.cantidad = detalle.cantidad;
-        detalleExistente.precio = detalle.precio;
-        await detalleFacturaRepository.save(detalleExistente);
-        detallesGuardados.push(detalleExistente);
+      if (!idfactura) {
+        return resp.status(404).json({ mensaje: "No se indica el ID" });
       }
-    } else {
-      const nuevoDetalle = new DetalleFactura();
-      nuevoDetalle.producto = detalle.producto;
-      nuevoDetalle.cantidad = detalle.cantidad;
-      nuevoDetalle.precio = detalle.precio;
-      nuevoDetalle.factura = factura;
 
-      await detalleFacturaRepository.save(nuevoDetalle);
-      detallesGuardados.push(nuevoDetalle);
+      const FacturaRepo = AppDataSource.getRepository(Factura);
+
+      let Facturas;
+      try {
+        Facturas = await FacturaRepo.findOneOrFail({ where: { idfactura } });
+      } catch (error) {
+        return resp
+          .status(404)
+          .json({ mensaje: "No se encontro la factura con ese ID" });
+      }
+
+      return resp.status(200).json(Factura);
+    } catch (error) {
+      return resp.status(400).json({ mensaje: error });
     }
   }
 
-  // Eliminar detalles que no están en la lista actualizada
-  factura.detalles = factura.detalles.filter(d => detallesGuardados.some(g => g.id === d.id));
+  static add = async (req: Request, resp: Response) => {
+    try {
+      const { idfactura, idcliente, detalles, estado } = req.body;
 
-  await facturaRepository.save(factura);
+      if (!idfactura) {
+        return resp.status(404).json({ mensaje: "Debe indicar el ID de la factura" });
+      }
+      if (!idcliente) {
+        return resp.status(404).json({ mensaje: "Debe indicar el id del cliente" });
+      }
+      if (estado) {
+        return resp
+          .status(404)
+          .json({ mensaje: "Debe indicar el estado de la factura" });
+      }
 
-  return res.json(factura);
-};
+      const FacturaRepo = AppDataSource.getRepository(Factura);
+      const pro = await FacturaRepo.findOne({ where: { idfactura } });
 
-};
+      if (pro) {
+        return resp
+          .status(404)
+          .json({ mensaje: "La factura ya existe en la base datos." });
+      }
 
-export default FacturaController;
+      const fecha = new Date();
+
+      let Facturas = new Factura();
+      Facturas.idfactura = idfactura;
+      Facturas.idcliente = idcliente;
+      Facturas.fecha = fecha;
+      Facturas.estado = true;
+
+
+      const errors= await validate(Factura, {validationError: { target: false, value: false}});
+      if (errors.length > 0){
+        return resp
+      }
+      await FacturaRepo.save(Facturas);
+      return resp.status(201).json({ mensaje: "Factura Agregada" });
+    } catch (error) {
+      return resp.status(400).json({ mensaje: error });
+    }
+  };
+
+
+  static update = async (req: Request, resp: Response) => {
+
+    const { idfactura, fecha, idcliente, estado } = req.body;
+
+    //validacion de datos de entrada
+    if (!idfactura) {
+      return resp.status(404).json({ mensaje: "Debe indicar el ID de la factura" });
+    }
+
+    if (!fecha) {
+      return resp
+        .status(404)
+        .json({ mensaje: "Debe indicar la fecha de ingreso" });
+    }
+    if (!idcliente) {
+      return resp
+        .status(404)
+        .json({ mensaje: "Debe indicar el id del cliente" });
+    }
+
+    const FacturaRepo = AppDataSource.getRepository(Factura);
+    let pro: Factura;
+    try {
+     pro = await FacturaRepo.findOneOrFail({ where: { idfactura } });
+    } catch (error) {
+      return resp.status(404).json({mensaje: "No existe la factura"})
+    }
+
+    pro.idfactura= idfactura ;
+    pro.idcliente= idcliente;
+    pro.fecha= fecha;
+    pro.estado=true;
+
+    try {
+      await FacturaRepo.save(pro);
+      return resp.status(200).json({mensaje: "Se guardo correctamente"})
+    } catch (error) {
+      return resp.status(400).json({mensaje: "No se pudo guardar"})
+    }
+  };
+
+  static delete = async (req: Request, resp: Response) => {
+    try {
+      const idfactura = parseInt(req.params["idfactura"]);
+      if (!idfactura) {
+        return resp.status(404).json({ mensaje: "Debe indicar el ID" });
+      }
+
+      const facturaRepo = AppDataSource.getRepository(Factura);
+      let pro: Factura;
+      try {
+        pro = await facturaRepo.findOneOrFail({
+          where: { idfactura: idfactura, estado: true },
+        });
+      } catch (error) {
+        return resp
+          .status(404)
+          .json({ mensaje: "No se encuentra la factura con ese ID" });
+      }
+
+      pro.estado = false;
+      try {
+        await facturaRepo.save(pro);
+        return resp.status(200).json({ mensaje: "Se eliminó correctamente" });
+      } catch (error) {
+        return resp.status(400).json({ mensaje: "No se pudo eliminar." });
+      }
+    } catch (error) {
+      return resp.status(400).json({ mensaje: "No se pudo eliminar" });
+    }
+  };
+}
+
+export default ProductosController;

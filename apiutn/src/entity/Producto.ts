@@ -1,5 +1,6 @@
-import { IsEmail, IsNotEmpty, MaxLength, length, maxLength } from "class-validator";
-import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { IsNotEmpty, MaxLength } from "class-validator";
+import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
+import { DetalleFactura } from "./DetalleFactura";
 @Entity()
 export class Producto {
   @PrimaryColumn()
@@ -8,7 +9,7 @@ export class Producto {
   @MaxLength(50)
   nombre: string;
   @Column()
-  @IsNotEmpty({message: ""})
+  @IsNotEmpty({message: "ddd"})
   precio: number;
   @Column()
   @IsNotEmpty()
@@ -19,4 +20,7 @@ export class Producto {
   @Column()
   @IsNotEmpty()
   estado: boolean;
+
+  @OneToMany(()=>DetalleFactura, (detalle) => detalle.producto)
+  detalleFactura : DetalleFactura[];
 }

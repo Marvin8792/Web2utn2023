@@ -1,13 +1,13 @@
 import { Router } from "express";
 
-import ProductosController from "../controller/FacturaController";
 import FacturaController from "../controller/FacturaController";
 
 const routes= Router();
 
-routes.get('', FacturaController.obtenerFacturas);
-routes.get('', FacturaController.modificarFactura);
-routes.post('',FacturaController.crearFactura);
-routes.post('',FacturaController.obtenerFacturaPorID);
+routes.use("", FacturaController.getAll);
+routes.use("/getById/:idfactura", FacturaController.getById)
+routes.use("", FacturaController.add)
+routes.use("", FacturaController.update)
+routes.delete("/:idfactura", FacturaController.delete)
 
 export default routes;

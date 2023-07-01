@@ -1,20 +1,23 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Factura } from './Factura';
+import { Producto } from './Producto';
 
 @Entity()
 export class DetalleFactura {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @Column({primary:true})
+  idfactura: number;
+
+  @Column({primary:true})
+  idproducto: number;
 
   @Column()
-  producto: string;
-
-  @Column()
-  cantidad: number;
-
-  @Column()
-  precio: number;
+  cant: number;
 
   @ManyToOne(() => Factura, factura => factura.detalles)
+  @JoinColumn({name: "idfactura"})
   factura: Factura;
+
+  @ManyToOne(()=> Producto, (producto) => producto.detalleFactura)
+  @JoinColumn({name : "idproducto"})
+  producto : Producto;
 }

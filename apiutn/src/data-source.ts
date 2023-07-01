@@ -4,6 +4,9 @@ import { Producto } from "./Entity/Producto"
 import { Usuarios } from "./Entity/usuario"
 import { DetalleFactura } from "./Entity/DetalleFactura"
 import { Factura } from "./Entity/Factura"
+import { Persona } from "./Entity/Persona"
+import { Cliente } from "./Entity/Cliente"
+import { TipoCliente } from "./Entity/TipoCliente"
 
 export const AppDataSource = new DataSource({
     type: "mysql",
@@ -14,7 +17,7 @@ export const AppDataSource = new DataSource({
     database: "pruebautn",
     synchronize: true,
     logging: false,
-    entities: [Producto,Usuarios,DetalleFactura,Factura],
+    entities: [Producto,Usuarios,DetalleFactura,Factura,Persona,Cliente,TipoCliente],
     migrations: [],
     subscribers: [],
 })
