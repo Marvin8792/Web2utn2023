@@ -1,0 +1,23 @@
+*{
+    background-color: plum;
+}
+ul>li>a{
+    text-decoration: none;
+
+}
+
+ul>li>a:hover{
+    color: black;
+    text-decoration: solid;
+}
+ul>li{
+    list-style: none;
+ display: inline-block;
+ margin: 5px 10px;   
+
+}
+
+ul{
+    margin: 0px;
+}
+
